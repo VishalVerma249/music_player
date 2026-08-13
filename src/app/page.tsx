@@ -1,57 +1,61 @@
-import React from 'react';
-import { ENVIRONMENT } from '@/config/environment';
+'use client';
+
+import React, { useEffect } from 'react';
+import { useUIStore } from '@/stores/uiStore';
+import { useExperienceStore } from '@/stores/experienceStore';
+import { LoadingScreen } from '@/components/experience/LoadingScreen';
+import { ExperienceCanvas } from '@/components/experience/ExperienceCanvas';
+import { AppShell } from '@/components/ui/AppShell';
+import { SceneManager } from '@/experience/SceneManager';
+import { registerDefaultScenes } from '@/components/experience/SceneFramework';
+import { Music2, Radio } from 'lucide-react';
 
 export default function Home() {
+  const isIntroComplete = useUIStore((state) => state.isIntroComplete);
+  const setIntroComplete = useUIStore((state) => state.setIntroComplete);
+  const activeScene = useExperienceStore((state) => state.activeScene);
+
+  useEffect(() => {
+    const sceneManager = new SceneManager();
+    registerDefaultScenes(sceneManager);
+    sceneManager.switchScene(activeScene);
+  }, [activeScene]);
+
+  if (!isIntroComplete) {
+    return <LoadingScreen onEnter={() => setIntroComplete(true)} />;
+  }
+
   return (
-    <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-6 md:p-12 overflow-hidden bg-zinc-950">
-      {/* Background Ambient Glow FX */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[140px] pointer-events-none animate-ambient-pulse" />
-      <div className="absolute top-1/3 left-1/3 w-[350px] h-[350px] bg-indigo-900/15 rounded-full blur-[120px] pointer-events-none" />
-
-      {/* Main Glass Experience Card */}
-      <div className="relative z-10 max-w-xl w-full glass-panel rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl space-y-8 text-center glow-subtle">
-        {/* Status Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium tracking-wide uppercase">
-          <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-          Phase 00 Foundation Complete
-        </div>
-
-        {/* Branding & Subtitle */}
-        <div className="space-y-3">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gradient font-outfit">
-            A U R A
-          </h1>
-          <p className="text-sm md:text-base text-zinc-400 leading-relaxed max-w-md mx-auto">
-            Cinematic Ambient Music Experience & Salon Atmosphere Engine
-          </p>
-        </div>
-
-        {/* Phase 00 Architecture Specs */}
-        <div className="grid grid-cols-2 gap-3 text-left pt-2 text-xs">
-          <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 space-y-1">
-            <span className="text-zinc-500 block uppercase font-mono text-[10px]">Framework</span>
-            <span className="text-zinc-200 font-semibold">Next.js 15 App Router</span>
+    <>
+      <ExperienceCanvas />
+      <AppShell>
+        {/* Central Atmospheric Centerpiece */}
+        <div className="relative z-20 max-w-lg w-full glass-panel rounded-3xl p-8 md:p-12 border border-white/10 shadow-2xl space-y-6 text-center glow-subtle transition-all duration-700 animate-fade-in">
+          {/* Animated Vinyl Aura Ring */}
+          <div className="mx-auto w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600/30 via-indigo-500/20 to-purple-400/30 border border-purple-400/40 flex items-center justify-center shadow-2xl relative">
+            <div className="absolute inset-0 rounded-full border border-purple-500/30 animate-ping" />
+            <Music2 className="w-10 h-10 text-purple-200 animate-pulse" />
           </div>
-          <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 space-y-1">
-            <span className="text-zinc-500 block uppercase font-mono text-[10px]">Architecture</span>
-            <span className="text-zinc-200 font-semibold">Decoupled Audio Engine</span>
+
+          {/* Title & Scene Display */}
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-purple-300">
+              <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+              <span>{activeScene} Atmosphere Active</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gradient font-outfit">
+              Continuous Ambient Music
+            </h2>
+            <p className="text-sm text-zinc-400 max-w-xs mx-auto font-light leading-relaxed">
+              Curated salon audio environment with dynamic music-reactive visuals.
+            </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 space-y-1">
-            <span className="text-zinc-500 block uppercase font-mono text-[10px]">State Management</span>
-            <span className="text-zinc-200 font-semibold">Zustand Global Stores</span>
-          </div>
-          <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 space-y-1">
-            <span className="text-zinc-500 block uppercase font-mono text-[10px]">Music Storage</span>
-            <span className="text-emerald-400 font-semibold">Zero Audio Blobs (Clean)</span>
+
+          <div className="pt-2 text-xs text-zinc-500 font-mono">
+            Phase 01 Cinematic Shell Active • Phase 02 Music Provider Next
           </div>
         </div>
-
-        {/* App Version & Environment */}
-        <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-zinc-500 border-t border-white/5">
-          <span>{ENVIRONMENT.appName}</span>
-          <span>v{ENVIRONMENT.appVersion}</span>
-        </div>
-      </div>
-    </main>
+      </AppShell>
+    </>
   );
 }
