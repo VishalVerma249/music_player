@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --color-cream: #f5ead6;
@@ -34,6 +34,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .seek-fill { background: var(--color-sun); box-shadow: 0 0 10px rgb(255 189 90 / .9); }
 .seek-knob { opacity: 0; transition: opacity .15s ease; }
 .seek-wrap:hover .seek-knob, .seek-wrap:focus-within .seek-knob { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .cinematic-bg { display: none; } }
 @media (max-width: 639px) {
   .hero-bg { background-position: center; }
 }
