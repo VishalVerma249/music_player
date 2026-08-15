@@ -1,0 +1,41 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+
+type PlaylistOption = { id: string; name: string };
+type Candidate = { videoId: string; title: string; channelTitle: string; description: string; thumbnailUrl: string; url: string };
+type AddedSong = { title: string; artist: string; playlist: string; videoId: string };
+
+export default function AddSongForm({ playlists }: { playlists: PlaylistOption[] }) {
+  const [title, setTitle] = useState(""); const [artist, setArtist] = useState(""); const [film, setFilm] = useState(""); const [playlist, setPlaylist] = useState(playlists[0]?.name ?? "");
+  const [searchId, setSearchId] = useState(""); const [candidates, setCandidates] = useState<Candidate[]>([]); const [selectedVideoId, setSelectedVideoId] = useState(""); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [success, setSuccess] = useState<AddedSong | null>(null);
+
+  async function searchYouTube() {
+    setError(""); setMessage(""); setSuccess(null); setSelectedVideoId("");
+    if (!title.trim() || !artist.trim()) { setError("Song title and artist are required."); return; }
+    setBusy(true);
+    try {
+      const response = await fetch("/api/add-song/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, artist, film }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error || "YouTube search failed.");
+      setSearchId(data.searchId); setCandidates(data.candidates); setMessage("Select the correct video. No result is selected automatically.");
+    } catch (requestError) { setError(requestError instanceof Error ? requestError.message : "YouTube search failed."); } finally { setBusy(false); }
+  }
+
+  async function addSong() {
+    setError(""); setMessage("");
+    if (!title.trim() || !artist.trim() || !playlist || !selectedVideoId || !searchId) { setError("Enter the song details, select a playlist, search, and choose a candidate."); return; }
+    setBusy(true);
+    try {
+      const response = await fetch("/api/add-song", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ searchId, videoId: selectedVideoId, playlist }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not add song.");
+      setSuccess({ title: data.song.title, artist: data.song.artist, playlist: data.song.playlist, videoId: data.song.videoId });
+      setMessage(data.warning || "Song saved. Return to the player to use it immediately.");
+    } catch (requestError) { setError(requestError instanceof Error ? requestError.message : "Could not add song."); } finally { setBusy(false); }
+  }
+
+  function reset() { setTitle(""); setArtist(""); setFilm(""); setSearchId(""); setCandidates([]); setSelectedVideoId(""); setMessage(""); setError(""); setSuccess(null); }
+  if (success) return <main className="min-h-dvh bg-[#17110f] px-4 py-10 text-white sm:px-8"><section className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/[.06] p-6 shadow-2xl backdrop-blur-xl"><Link href="/" className="inline-flex rounded-full border border-white/15 bg-white/[.06] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[.12em] text-white/65 transition hover:border-sun/50 hover:bg-white/10 hover:text-white">Back to Player</Link><p className="mt-5 text-xs font-bold uppercase tracking-[.25em] text-amber-300">Song added successfully</p><h1 className="mt-3 font-display text-4xl text-amber-50">{success.title}</h1><p className="mt-2 text-white/65">{success.artist} - {success.playlist}</p><p className="mt-4 break-all text-sm text-white/55">YouTube video ID: <code>{success.videoId}</code></p><p className="mt-6 text-sm text-white/60">{message}</p><button onClick={reset} className="mt-6 rounded-xl bg-amber-300 px-4 py-3 text-sm font-bold text-[#241610]">Add another song</button></section></main>;
+
+  return <main className="min-h-dvh bg-[#17110f] px-4 py-10 text-white sm:px-8"><section className="mx-auto max-w-5xl"><header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.25em] text-amber-300">Local playlist admin</p><h1 className="mt-2 font-display text-4xl text-amber-50">Add a song</h1><p className="mt-2 text-sm text-white/55">Search YouTube, review the candidates, and explicitly approve one.</p></div><Link href="/" className="inline-flex shrink-0 rounded-full border border-white/15 bg-white/[.06] px-3 py-2 text-[9px] font-semibold uppercase tracking-[.12em] text-white/65 transition hover:border-sun/50 hover:bg-white/10 hover:text-white">Back to Player</Link></header><div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_1fr]"><form onSubmit={(event) => { event.preventDefault(); void searchYouTube(); }} className="h-fit space-y-4 rounded-3xl border border-white/10 bg-white/[.06] p-5 backdrop-blur-xl"><label className="block text-sm text-white/70">Song title<input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-white outline-none focus:border-amber-300/70" /></label><label className="block text-sm text-white/70">Artist<input value={artist} onChange={(event) => setArtist(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-white outline-none focus:border-amber-300/70" /></label><label className="block text-sm text-white/70">Album / Movie / Source (optional)<input value={film} onChange={(event) => setFilm(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-white outline-none focus:border-amber-300/70" /></label><label className="block text-sm text-white/70">Playlist<select value={playlist} onChange={(event) => setPlaylist(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-white outline-none focus:border-amber-300/70">{playlists.map((option) => <option key={option.id} value={option.name}>{option.name}</option>)}</select></label><button disabled={busy} className="w-full rounded-xl bg-amber-300 px-4 py-3 text-sm font-bold text-[#241610] disabled:opacity-50">{busy ? "Searching..." : "Search YouTube"}</button>{candidates.length > 0 && <button type="button" disabled={busy || !selectedVideoId} onClick={() => void addSong()} className="w-full rounded-xl border border-amber-300/60 px-4 py-3 text-sm font-bold text-amber-100 disabled:opacity-40">Add Song</button>}{error && <p role="alert" className="text-sm text-red-300">{error}</p>}{message && <p className="text-sm text-amber-100/75">{message}</p>}</form><div>{candidates.length === 0 ? <div className="rounded-3xl border border-dashed border-white/15 p-8 text-sm text-white/45">Search results will appear here. Choose a video explicitly before adding.</div> : <div className="grid gap-4 sm:grid-cols-2">{candidates.map((candidate) => <article key={candidate.videoId} className={selectedVideoId === candidate.videoId ? "rounded-2xl border border-amber-300 bg-amber-300/10 p-3" : "rounded-2xl border border-white/10 bg-white/[.04] p-3"}><img src={candidate.thumbnailUrl} alt="" className="aspect-video w-full rounded-xl object-cover" /><h2 className="mt-3 line-clamp-2 text-sm font-semibold text-white">{candidate.title}</h2><p className="mt-1 truncate text-xs text-white/60">{candidate.channelTitle}</p><p className="mt-2 line-clamp-3 text-xs leading-relaxed text-white/45">{candidate.description}</p><div className="mt-3 flex items-center justify-between gap-2"><a href={candidate.url} target="_blank" rel="noreferrer" className="text-xs text-amber-200 underline">Open on YouTube</a><label className="flex items-center gap-2 text-xs font-semibold text-amber-100"><input type="radio" name="candidate" checked={selectedVideoId === candidate.videoId} onChange={() => setSelectedVideoId(candidate.videoId)} />Select</label></div><p className="mt-2 break-all font-mono text-[10px] text-white/35">{candidate.videoId}</p></article>)}</div>}</div></div></section></main>;
+}
